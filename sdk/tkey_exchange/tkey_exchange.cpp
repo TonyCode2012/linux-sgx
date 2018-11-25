@@ -150,15 +150,20 @@ extern "C" sgx_status_t sgx_ra_get_ga(
             }
             memcpy(&g_priv_key, &priv_key, sizeof(item->a));
             memcpy(&g_pub_key, &pub_key, sizeof(item->g_a));  // Fix one  item->a   ->  item->g_a
-            uint8_t *pubKeyBuf = (uint8_t*)malloc(sizeof(pub_key));
-            sgx_sealed_data_t pubKeySealedData;
-            sgx_status_t ret_priKey = sgx_seal_data(0, NULL, sizeof(pub_key), pubKeyBuf, sgx_calc_sealed_data_size(0,sizeof(pub_key)), &pubKeySealedData);
-            if(SGX_SUCCESS != ret_priKey) {
-                return ret_priKey;
+            if(sealData != NULL) {
+                //uint8_t *pubKeyBuf = (uint8_t*)malloc(sizeof(item->g_a));
+                //memcpy(pubKeyBuf, &pub_key, sizeof(pubKeyBuf));
+                uint8_t pubKeyBuf[64] = "wodedongxizaishenmedifang";
+                //sgx_sealed_data_t pubKeySealedData;
+                //sgx_status_t ret_priKey = sgx_seal_data(0, NULL, sizeof(pubKeyBuf), pubKeyBuf, sgx_calc_sealed_data_size(0,sizeof(pubKeyBuf)), &pubKeySealedData);
+                sgx_status_t ret_priKey = sgx_seal_data(0, NULL, sizeof(pubKeyBuf), pubKeyBuf, sgx_calc_sealed_data_size(0,sizeof(pubKeyBuf)), (sgx_sealed_data_t*)sealData);
+                //sgx_status_t ret_priKey = sgx_seal_data(0, NULL, sizeof(pubKeyBuf), pubKeyBuf, sgx_calc_sealed_data_size(0,sizeof(pubKeyBuf)), sealData);
+                if(SGX_SUCCESS != ret_priKey) {
+                    return ret_priKey;
+                }
+                //sealData = (uint8_t*)malloc(sizeof(pubKeySealedData));
+                //memcpy(sealData, &pubKeySealedData, sizeof(pubKeySealedData));
             }
-            sealData = (uint8_t*)malloc(sizeof(pubKeySealedData));
-            memcpy(sealData, &pubKeySealedData, sizeof(pubKeySealedData));
-            //g_key_flag = 1;
         }else{
             memcpy(&priv_key, &g_priv_key, sizeof(item->a));
             memcpy(&pub_key, &g_pub_key, sizeof(item->g_a));    // Fix two item->a   ->  item->g_a

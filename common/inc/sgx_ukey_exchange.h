@@ -35,6 +35,7 @@
 #include "sgx_eid.h"
 #include "sgx_defs.h"
 #include "sgx_key_exchange.h"
+#include "sgx_tseal.h"
 
 #ifdef  __cplusplus
 extern "C" {
