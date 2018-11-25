@@ -34,6 +34,7 @@
 #include "sgx_trts.h"
 #include "sgx_utils.h"
 #include "sgx_lfence.h"
+#include "sgx_tseal.h"
 #include "ecp_interface.h"
 #include "util.h"
 #include "string.h"
@@ -86,12 +87,18 @@ typedef struct _ra_db_item_t
 static simple_vector g_ra_db = {0, 0, NULL};
 static sgx_spinlock_t g_ra_db_lock = SGX_SPINLOCK_INITIALIZER;
 static uintptr_t g_kdf_cookie = 0;
+static sgx_ec256_public_t g_pub_key = {{0},{0}};
+static sgx_ec256_private_t g_priv_key = {0};
+//static int g_key_flag = 0;
+
 #define ENC_KDF_POINTER(x)  (uintptr_t)(x) ^ g_kdf_cookie
 #define DEC_KDF_POINTER(x)  (sgx_ra_derive_secret_keys_t)((x) ^ g_kdf_cookie)
 
 extern "C" sgx_status_t sgx_ra_get_ga(
     sgx_ra_context_t context,
-    sgx_ec256_public_t *g_a)
+    sgx_ec256_public_t *g_a,
+    sgx_status_t g_key_flag,
+    uint8_t *sealData)
 {
     sgx_status_t se_ret;
     if(vector_size(&g_ra_db) <= context||!g_a)
@@ -123,20 +130,38 @@ extern "C" sgx_status_t sgx_ra_get_ga(
             se_ret = SGX_ERROR_INVALID_STATE;
             break;
         }
-        // ecc_state should be closed when exit.
-        se_ret = sgx_ecc256_open_context(&ecc_state);
-        if (SGX_SUCCESS != se_ret)
-        {
-            if(SGX_ERROR_OUT_OF_MEMORY != se_ret)
-                se_ret = SGX_ERROR_UNEXPECTED;
-            break;
-        }
-        se_ret = sgx_ecc256_create_key_pair(&priv_key, &pub_key, ecc_state);
-        if (SGX_SUCCESS != se_ret)
-        {
-            if(SGX_ERROR_OUT_OF_MEMORY != se_ret)
-                se_ret = SGX_ERROR_UNEXPECTED;
-            break;
+
+        if(g_key_flag == 0){
+            // ecc_state should be closed when exit.
+
+            se_ret = sgx_ecc256_open_context(&ecc_state);
+            if (SGX_SUCCESS != se_ret)
+            {
+                if(SGX_ERROR_OUT_OF_MEMORY != se_ret)
+                    se_ret = SGX_ERROR_UNEXPECTED;
+                break;
+            }
+            se_ret = sgx_ecc256_create_key_pair(&priv_key, &pub_key, ecc_state);
+            if (SGX_SUCCESS != se_ret)
+            {
+                if(SGX_ERROR_OUT_OF_MEMORY != se_ret)
+                    se_ret = SGX_ERROR_UNEXPECTED;
+                break;
+            }
+            memcpy(&g_priv_key, &priv_key, sizeof(item->a));
+            memcpy(&g_pub_key, &pub_key, sizeof(item->g_a));  // Fix one  item->a   ->  item->g_a
+            uint8_t *pubKeyBuf = (uint8_t*)malloc(sizeof(pub_key));
+            sgx_sealed_data_t pubKeySealedData;
+            sgx_status_t ret_priKey = sgx_seal_data(0, NULL, sizeof(pub_key), pubKeyBuf, sgx_calc_sealed_data_size(0,sizeof(pub_key)), &pubKeySealedData);
+            if(SGX_SUCCESS != ret_priKey) {
+                return ret_priKey;
+            }
+            sealData = (uint8_t*)malloc(sizeof(pubKeySealedData));
+            memcpy(sealData, &pubKeySealedData, sizeof(pubKeySealedData));
+            //g_key_flag = 1;
+        }else{
+            memcpy(&priv_key, &g_priv_key, sizeof(item->a));
+            memcpy(&pub_key, &g_pub_key, sizeof(item->g_a));    // Fix two item->a   ->  item->g_a
         }
         memcpy(&item->a, &priv_key, sizeof(item->a));
         memcpy(&item->g_a, &pub_key, sizeof(item->g_a));

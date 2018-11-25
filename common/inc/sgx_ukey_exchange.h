@@ -45,7 +45,9 @@ typedef sgx_status_t (* sgx_ecall_get_ga_trusted_t)(
     sgx_enclave_id_t eid,
     sgx_status_t* retval,
     sgx_ra_context_t context,
-    sgx_ec256_public_t *g_a);
+    sgx_ec256_public_t *g_a,
+    sgx_status_t g_key_flag,
+    uint8_t *sealData);
 
 typedef sgx_status_t (* sgx_ecall_proc_msg2_trusted_t)(
     sgx_enclave_id_t eid,
@@ -115,7 +117,9 @@ sgx_status_t SGXAPI sgx_ra_get_msg1(
     sgx_ra_context_t context,
     sgx_enclave_id_t eid,
     sgx_ecall_get_ga_trusted_t p_get_ga,
-    sgx_ra_msg1_t *p_msg1);
+    sgx_ra_msg1_t *p_msg1,
+    sgx_status_t g_key_flag,
+    uint8_t *sealData);
 
 /*
  * sgx_ra_proc_msg2 is used to process the remote attestation and key exchange
