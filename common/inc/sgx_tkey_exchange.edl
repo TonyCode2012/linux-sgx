@@ -35,8 +35,7 @@ enclave {
     trusted {
         public sgx_status_t sgx_ra_get_ga(sgx_ra_context_t context,
             [out] sgx_ec256_public_t *g_a,
-            sgx_status_t g_key_flag,
-            [out] uint8_t *sealData);
+            [in,out]sgx_ec256_fix_data_t *fix_data);
 
         public sgx_status_t sgx_ra_proc_msg2_trusted(sgx_ra_context_t context,
             [in]const sgx_ra_msg2_t *p_msg2, /*copy msg2 except quote into enclave */
