@@ -65,9 +65,9 @@ typedef struct _ec256_fix_data_t
 {
     uint32_t g_key_flag;
     uint32_t sealed_data_size;
-    sgx_sealed_data_t enc_ec256_private_key;
     sgx_ec256_public_t ec256_public_key;
     sgx_ec256_private_t ec256_private_key;
+    sgx_sealed_data_t enc_ec256_private_key;
 } sgx_ec256_fix_data_t;
 
 #ifdef __cplusplus

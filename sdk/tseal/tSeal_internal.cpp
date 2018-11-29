@@ -136,7 +136,8 @@ sgx_status_t sgx_unseal_data_helper(const sgx_sealed_data_t *p_sealed_data, uint
         if ((err == SGX_ERROR_INVALID_CPUSVN) || (err == SGX_ERROR_INVALID_ISVSVN) || (err == SGX_ERROR_OUT_OF_MEMORY))
             return err;
         // Return error indicating the blob is corrupted
-        return SGX_ERROR_MAC_MISMATCH;
+        //return SGX_ERROR_MAC_MISMATCH;
+        return SGX_ERR_MAC_ENC_LEN;
     }
 
     //
@@ -156,7 +157,8 @@ sgx_status_t sgx_unseal_data_helper(const sgx_sealed_data_t *p_sealed_data, uint
     {
         // Clear temp state
         memset_s(&seal_key, sizeof(sgx_key_128bit_t), 0, sizeof(sgx_key_128bit_t));
-        return err;
+        //return err;
+        return SGX_ERR_MAC_ADD_TXT_LEN;
     }
 
     if (additional_MACtext_length > 0)

@@ -173,17 +173,20 @@ extern "C" sgx_status_t sgx_unseal_data(const sgx_sealed_data_t *p_sealed_data, 
     uint32_t encrypt_text_length = sgx_get_encrypt_txt_len(p_sealed_data);
     if(encrypt_text_length == UINT32_MAX)
     {
-        return SGX_ERROR_MAC_MISMATCH; // Return error indicating the blob is corrupted
+        //return SGX_ERROR_MAC_MISMATCH; // Return error indicating the blob is corrupted
+        return SGX_ERR_MAC_ENC_LEN; // Return error indicating the blob is corrupted
     }
     uint32_t add_text_length = sgx_get_add_mac_txt_len(p_sealed_data);
     if(add_text_length == UINT32_MAX)
     {
-        return SGX_ERROR_MAC_MISMATCH; // Return error indicating the blob is corrupted
+        //return SGX_ERROR_MAC_MISMATCH; // Return error indicating the blob is corrupted
+        return SGX_ERR_MAC_ADD_TXT_LEN; // Return error indicating the blob is corrupted
     }
     uint32_t sealedDataSize = sgx_calc_sealed_data_size(add_text_length,encrypt_text_length);
     if (sealedDataSize == UINT32_MAX)
     {
-        return SGX_ERROR_MAC_MISMATCH; // Return error indicating the blob is corrupted
+        //return SGX_ERROR_MAC_MISMATCH; // Return error indicating the blob is corrupted
+        return SGX_ERR_MAC_SEALED_DATA_LEN; // Return error indicating the blob is corrupted
     }
 
     //

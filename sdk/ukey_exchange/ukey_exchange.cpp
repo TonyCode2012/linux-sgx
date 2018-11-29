@@ -65,7 +65,8 @@ sgx_status_t sgx_ra_get_msg1(
     sgx_enclave_id_t eid,
     sgx_ecall_get_ga_trusted_t p_get_ga,
     sgx_ra_msg1_t *p_msg1,
-    sgx_ec256_fix_data_t *fix_data)
+    sgx_ec256_fix_data_t *fix_data,
+    sgx_sealed_data_t *enc_private_key)
 {
     if(!p_msg1 || !p_get_ga)
         return SGX_ERROR_INVALID_PARAMETER;
@@ -89,7 +90,7 @@ sgx_status_t sgx_ra_get_msg1(
     sgx_ec256_public_t g_a;
     sgx_status_t status = SGX_ERROR_UNEXPECTED;
     memset(&g_a, 0, sizeof(g_a));
-    ret = p_get_ga(eid, &status, context, &g_a, fix_data);
+    ret = p_get_ga(eid, &status, context, &g_a, fix_data, enc_private_key);
     if(SGX_SUCCESS !=ret)
         return ret;
     if (SGX_SUCCESS != status)

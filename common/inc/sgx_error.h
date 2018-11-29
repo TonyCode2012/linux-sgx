@@ -111,6 +111,9 @@ typedef enum _status_t
 
 
     SGX_INTERNAL_ERROR_ENCLAVE_CREATE_INTERRUPTED = SGX_MK_ERROR(0xF001), /* The ioctl for enclave_create unexpectedly failed with EINTR. */ 
+    SGX_ERR_MAC_ENC_LEN = SGX_MK_ERROR(0x3101),
+    SGX_ERR_MAC_ADD_TXT_LEN = SGX_MK_ERROR(0x3102),
+    SGX_ERR_MAC_SEALED_DATA_LEN = SGX_MK_ERROR(0x3103),
 
 } sgx_status_t;
 
