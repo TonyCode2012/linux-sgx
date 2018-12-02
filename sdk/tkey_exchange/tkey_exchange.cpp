@@ -89,8 +89,8 @@ static sgx_spinlock_t g_ra_db_lock = SGX_SPINLOCK_INITIALIZER;
 static uintptr_t g_kdf_cookie = 0;
 static sgx_ec256_public_t g_pub_key = {{0},{0}};
 static sgx_ec256_private_t g_priv_key = {0};
-static sgx_sealed_data_t tmpbuf;
-static uint32_t sealed_len;
+static sgx_sealed_data_t sealed_data_buf;
+static uint32_t sealed_data_size;
 //static int g_key_flag = 0;
 
 #define ENC_KDF_POINTER(x)  (uintptr_t)(x) ^ g_kdf_cookie
@@ -157,16 +157,18 @@ extern "C" sgx_status_t sgx_ra_get_ga(
             fix_data->g_key_flag = 1;
             memcpy(&fix_data->ec256_public_key, &pub_key, sizeof(item->g_a));
             memcpy(&fix_data->ec256_private_key, &priv_key, sizeof(item->a));
-            sealed_len = sgx_calc_sealed_data_size(0,sizeof(priv_key));
+            sealed_data_size = sgx_calc_sealed_data_size(0,sizeof(priv_key));
             sgx_status_t ret_priKey = sgx_seal_data(0, 
                                                     NULL, 
                                                     sizeof(priv_key), 
                                                     (uint8_t*)&priv_key, 
-                                                    sealed_len, 
-                                                    &tmpbuf);
-            fix_data->p_sealed_data = (uint8_t*)malloc(sealed_len);
-            memcpy(fix_data->p_sealed_data, &tmpbuf, sealed_len);
-            fix_data->sealed_data_size = sealed_len;
+                                                    sealed_data_size, 
+                                                    &sealed_data_buf);
+            if(SGX_SUCCESS != ret_priKey) {
+                return ret_priKey;
+            }
+            fix_data->sealed_data_size = sealed_data_size;
+            memcpy(fix_data->p_sealed_data, (uint8_t*)&sealed_data_buf, sealed_data_size);
             /*
             sgx_attributes_t attr;
             attr.flags = 0xFF0000000000000B;
@@ -181,14 +183,17 @@ extern "C" sgx_status_t sgx_ra_get_ga(
                                                        NULL, 
                                                        sizeof(priv_key), 
                                                        (uint8_t*)&priv_key, 
-                                                       sealed_len, 
-                                                       &tmpbuf);
+                                                       sealed_data_size, 
+                                                       &sealed_data_buf);
                                                     */
-            if(SGX_SUCCESS != ret_priKey) {
-                return ret_priKey;
-            }
-            uint32_t decLen = sizeof(priv_key);
-            sgx_status_t retUnseal = sgx_unseal_data(&tmpbuf,
+        }
+        else
+        {
+            sgx_sealed_data_t *sealed_data_tmp = (sgx_sealed_data_t*)malloc(fix_data->sealed_data_size);
+            //memset(sealed_data_tmp, 0, sizeof(sealed_data_tmp));
+            memcpy(sealed_data_tmp, (sgx_sealed_data_t*)fix_data->p_sealed_data, fix_data->sealed_data_size);
+            uint32_t decLen = sgx_get_encrypt_txt_len(sealed_data_tmp);
+            sgx_status_t retUnseal = sgx_unseal_data(sealed_data_tmp,
                                                      NULL,
                                                      0,
                                                      (uint8_t*)&priv_key,
@@ -196,35 +201,7 @@ extern "C" sgx_status_t sgx_ra_get_ga(
             if(SGX_SUCCESS != retUnseal){
                 return retUnseal;
             }
-        }
-        else
-        {
-            //uint32_t decLen = 64;
-            //uint8_t priv_tmp[64];
-            sgx_sealed_data_t *sealed_data_tmp = (sgx_sealed_data_t*)malloc(fix_data->sealed_data_size);
-            memset(sealed_data_tmp, 0, sizeof(sealed_data_tmp));
-            memcpy(sealed_data_tmp, (sgx_sealed_data_t*)fix_data->p_sealed_data, fix_data->sealed_data_size);
-            uint32_t decLen = sgx_get_encrypt_txt_len(sealed_data_tmp);
-            uint8_t *priv_tmp = (uint8_t*)malloc(decLen);
-            //if(sgx_is_within_enclave(sealed_data_tmp,sizeof(sealed_data_tmp)) == 0) {
-            //    return (sgx_status_t)0x3333;
-            //}
-            sgx_status_t retUnseal = sgx_unseal_data(sealed_data_tmp,
-                                                     NULL,
-                                                     0,
-                                                     priv_tmp,
-                                                     &decLen);
-            if(SGX_SUCCESS != retUnseal){
-                return retUnseal;
-            }
-            /*
-            */
-            memcpy(&pub_key, &fix_data->ec256_public_key, sizeof(fix_data->ec256_public_key));
-            memcpy(&priv_key, (sgx_ec256_private_t*)priv_tmp, sizeof(sgx_ec256_private_t));
-            //memcpy(&fix_data->ec256_private_key, &g_priv_key, sizeof(g_priv_key));
-            //memcpy(&priv_key, priv_tmp, sizeof(priv_tmp));
-            //memcpy(&priv_key, &g_priv_key, sizeof(item->a));
-            //memcpy(&pub_key, &g_pub_key, sizeof(item->g_a));    // Fix two item->a   ->  item->g_a
+            memcpy(&pub_key, &fix_data->ec256_public_key, sizeof(sgx_ec256_public_t));
         }
         memcpy(&item->a, &priv_key, sizeof(item->a));
         memcpy(&item->g_a, &pub_key, sizeof(item->g_a));

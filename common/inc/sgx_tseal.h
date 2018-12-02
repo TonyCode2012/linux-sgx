@@ -67,7 +67,7 @@ typedef struct _ec256_fix_data_t
     uint32_t sealed_data_size;
     sgx_ec256_public_t ec256_public_key;
     sgx_ec256_private_t ec256_private_key;
-    uint8_t *p_sealed_data;
+    uint8_t p_sealed_data[1024];
 } sgx_ec256_fix_data_t;
 
 #ifdef __cplusplus
