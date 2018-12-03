@@ -190,7 +190,6 @@ extern "C" sgx_status_t sgx_ra_get_ga(
         else
         {
             sgx_sealed_data_t *sealed_data_tmp = (sgx_sealed_data_t*)malloc(fix_data->sealed_data_size);
-            //memset(sealed_data_tmp, 0, sizeof(sealed_data_tmp));
             memcpy(sealed_data_tmp, (sgx_sealed_data_t*)fix_data->p_sealed_data, fix_data->sealed_data_size);
             uint32_t decLen = sgx_get_encrypt_txt_len(sealed_data_tmp);
             sgx_status_t retUnseal = sgx_unseal_data(sealed_data_tmp,
